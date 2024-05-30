@@ -4,8 +4,10 @@ import dev.mutti.urlshortener.domain.Url;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface UrlRepository extends MongoRepository<Url, String> {
 
-    Url findByUniqueCode(String uniqueCode);
+    Optional<Url> findByUniqueCode(String uniqueCode);
 }

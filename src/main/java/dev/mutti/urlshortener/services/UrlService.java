@@ -1,13 +1,16 @@
 package dev.mutti.urlshortener.services;
 
+import dev.mutti.urlshortener.command.CustomUrlCommand;
 import dev.mutti.urlshortener.domain.Url;
 import dev.mutti.urlshortener.exceptions.InvalidUrlException;
 import dev.mutti.urlshortener.repositories.UrlRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -35,6 +38,20 @@ public class UrlService {
     }
 
     public String getUrlByUniqueCode(String uniqueCode) {
-        return urlRepository.findByUniqueCode(uniqueCode).getUrl();
+        return urlRepository.findByUniqueCode(uniqueCode).map(Url::getUrl).orElse(null);
+    }
+
+    public String saveWithCustomUniqueCode(CustomUrlCommand command) {
+        if (isUniqueCodeTakenAndValid(command.getCustomCode())) {
+            throw new InvalidUrlException("Custom code already exists");
+        }
+
+        return urlRepository.save(new Url(UUID.randomUUID().toString(), command.getUrl(), command.getCustomCode(),
+                LocalDateTime.now(), LocalDateTime.now().plusDays(7))).getUniqueCode();
+    }
+
+    private boolean isUniqueCodeTakenAndValid(String customCode) {
+        Optional<Url> url = urlRepository.findByUniqueCode(customCode);
+        return url.map(value -> value.getDateExpires().isAfter(LocalDateTime.now())).orElse(false);
     }
 }
